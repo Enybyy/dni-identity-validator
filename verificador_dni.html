@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Verificador de DNI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    body { background-color: #f8f9fa; padding: 20px; }
+    .card { max-width: 1200px; margin: 0 auto; box-shadow: 0 0.5rem 1rem rgba(0,0,0,.1); border: none; border-radius: 10px; }
+    .card-header { background:#0d6efd; color:#fff; }
+    .mapping-select { min-width: 220px; }
+    .badge.bg-success { background:#28a745 !important; }
+    .badge.bg-warning { background:#ffc107 !important; color:#000; }
+    .badge.bg-danger { background:#dc3545 !important; }
+    .table-sm td, .table-sm th { padding: .4rem .5rem; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between">
+      <div>
+        <h4 class="mb-0">Verificador de DNI</h4>
+        <small>Consulta información de personas en RENIEC</small>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="alert alert-primary" role="alert">
+        Importante: ingresa tu token de Decolecta. Se guarda localmente en tu navegador.
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Token de la API</label>
+        <div class="input-group">
+          <input type="password" id="apiTokenInput" class="form-control" placeholder="sk_xxx" />
+          <button id="btnSaveToken" class="btn btn-outline-primary">Guardar</button>
+        </div>
+        <div class="mt-2 d-flex align-items-center gap-2">
+          <div>
+            <label class="form-label mb-1">o carga un archivo TXT con varios tokens (uno por línea)</label>
+            <input type="file" id="tokensFile" class="form-control" accept=".txt" />
+          </div>
+        </div>
+        <small id="tokenListInfo" class="text-muted"></small>
+      </div>
+
+      <ul class="nav nav-tabs" id="tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabSingle" type="button" role="tab">Consulta Individual</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabBulk" type="button" role="tab">Consulta Múltiple</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabExcel" type="button" role="tab">Desde Excel</button>
+        </li>
+      </ul>
+
+      <div class="tab-content pt-3">
+        <div class="tab-pane fade" id="tabSingle" role="tabpanel">
+          <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-4">
+              <label class="form-label">DNI</label>
+              <input type="text" id="singleDni" class="form-control" maxlength="12" placeholder="Ej: 12345678" />
+            </div>
+            <div class="col-auto">
+              <button id="btnVerificarSingle" class="btn btn-primary">Verificar</button>
+            </div>
+          </div>
+          <div id="singleResult" class="mt-3 d-none">
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead><tr><th>DNI</th><th>Nombre (RENIEC)</th><th>Estado</th><th>Mensaje</th></tr></thead>
+                <tbody id="singleResultBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-pane fade" id="tabBulk" role="tabpanel">
+          <div class="mb-2">
+            <label class="form-label">DNIs (separados por coma o salto de línea)</label>
+            <textarea id="bulkDnis" class="form-control" rows="4" placeholder="12345678\n87654321, 11223344"></textarea>
+          </div>
+          <button id="btnVerificarBulk" class="btn btn-primary">Verificar DNIs</button>
+          <div id="bulkResults" class="mt-3 d-none">
+            <div class="table-responsive">
+              <table class="table table-sm table-hover">
+                <thead><tr><th>#</th><th>DNI</th><th>Nombre (RENIEC)</th><th>Estado</th><th>Mensaje</th></tr></thead>
+                <tbody id="bulkResultsBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-pane fade show active" id="tabExcel" role="tabpanel">
+          <div class="mb-3">
+            <label class="form-label">Archivo Excel (.xlsx)</label>
+            <input type="file" id="excelFile" class="form-control" accept=".xlsx,.xls" />
+          </div>
+
+          <div class="accordion" id="excelAcc">
+            <div class="accordion-item">
+              <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#accSheet">Seleccione una hoja del archivo</button></h2>
+              <div id="accSheet" class="accordion-collapse collapse show"><div class="accordion-body">
+                <select id="sheetSelect" class="form-select"><option value="">Seleccione...</option></select>
+              </div></div>
+            </div>
+            <div class="accordion-item">
+              <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accMap">Mapeo de columnas</button></h2>
+              <div id="accMap" class="accordion-collapse collapse"><div class="accordion-body">
+                <div id="columnMapping" class="row gy-2"></div>
+                <small id="rowCountInfo" class="text-muted"></small>
+              </div></div>
+            </div>
+          </div>
+
+          <div id="excelPreview" class="mt-3 d-none">
+            <h6 class="mb-2">Vista previa (primeras filas)</h6>
+            <div class="table-responsive border rounded">
+              <table class="table table-sm mb-0">
+                <thead id="excelPreviewHead"></thead>
+                <tbody id="excelPreviewBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end mt-3">
+            <button id="btnVerificarExcel" class="btn btn-primary" disabled>Verificar DNIs</button>
+          </div>
+
+          <div id="excelResults" class="mt-4 d-none">
+            <div class="d-flex justify-content-end mb-2 gap-2">
+              <button id="btnCopyReniecNames" class="btn btn-sm btn-outline-secondary">Copiar columna: Nombre (RENIEC)</button>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover table-sm">
+                <thead class="table-light">
+                  <tr>
+                    <th>Fila</th>
+                    <th>DNI</th>
+                    <th>Nombre (Excel)</th>
+                    <th>Nombre (RENIEC)</th>
+                    <th>Estado</th>
+                    <th>Mensaje</th>
+                  </tr>
+                </thead>
+                <tbody id="excelResultsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Globals
+    let apiToken = localStorage.getItem('apiToken') || '';
+    let apiTokenList = JSON.parse(localStorage.getItem('apiTokenList')||'[]');
+    let apiTokenIndex = parseInt(localStorage.getItem('apiTokenIndex')||'0',10) || 0;
+    let workbook = null;
+    let currentSheet = null;
+    let excelHeaders = [];
+    let headerRowIndex = 0;
+    let currentResults = [];
+
+    // Normalización sin tildes y minúsculas
+    function normalizeStr(s){
+      if(!s) return '';
+      return s.toString().normalize('NFD').replace(/\p{Diacritic}+/gu,'').toLowerCase().trim();
+    }
+    function firstToken(s){ const n=normalizeStr(s); return n? n.split(/\s+/)[0]:''; }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('apiTokenInput').value = apiToken;
+      document.getElementById('btnSaveToken').addEventListener('click', () => {
+        apiToken = document.getElementById('apiTokenInput').value.trim();
+        localStorage.setItem('apiToken', apiToken);
+        // Si escribe un token manual y no hay lista, úsalo como lista de 1
+        if(!apiTokenList || apiTokenList.length===0){
+          apiTokenList = apiToken ? [apiToken] : [];
+          apiTokenIndex = 0;
+          persistTokenList();
+        }
+        updateTokenListInfo();
+      });
+
+      document.getElementById('excelFile').addEventListener('change', handleExcelFile);
+      document.getElementById('sheetSelect').addEventListener('change', handleSheetSelect);
+      document.getElementById('btnVerificarExcel').addEventListener('click', handleExcelVerification);
+      document.getElementById('btnVerificarSingle').addEventListener('click', handleSingleVerification);
+      document.getElementById('btnVerificarBulk').addEventListener('click', handleBulkVerification);
+      document.getElementById('tokensFile').addEventListener('change', handleTokensFile);
+      updateTokenListInfo();
+      const cpy = document.getElementById('btnCopyReniecNames');
+      if(cpy) cpy.addEventListener('click', copyReniecNames);
+    });
+
+    function persistTokenList(){
+      localStorage.setItem('apiTokenList', JSON.stringify(apiTokenList||[]));
+      localStorage.setItem('apiTokenIndex', String(apiTokenIndex||0));
+    }
+
+    function updateTokenListInfo(){
+      const info = document.getElementById('tokenListInfo');
+      const n = apiTokenList?.length || 0;
+      info.textContent = n>0 ? `Tokens cargados: ${n} (usando el #${(apiTokenIndex%Math.max(1,n))+1})` : 'Sin lista de tokens cargada';
+    }
+
+    async function handleTokensFile(e){
+      const file = e.target.files && e.target.files[0];
+      if(!file) return;
+      const text = await file.text();
+      const list = text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+      apiTokenList = list;
+      apiTokenIndex = 0;
+      persistTokenList();
+      updateTokenListInfo();
+    }
+
+    function getActiveToken(){
+      if(apiTokenList && apiTokenList.length>0){
+        const idx = ((apiTokenIndex%apiTokenList.length)+apiTokenList.length)%apiTokenList.length;
+        return apiTokenList[idx];
+      }
+      return apiToken || '';
+    }
+
+    function advanceToken(){
+      if(apiTokenList && apiTokenList.length>0){
+        apiTokenIndex = (apiTokenIndex + 1) % apiTokenList.length;
+        persistTokenList();
+        updateTokenListInfo();
+      }
+    }
+
+    function shouldRotateToken(status, bodyText){
+      if([401,403,429].includes(status)) return true;
+      const t = (bodyText||'').toLowerCase();
+      return t.includes('quota') || t.includes('límite') || t.includes('limite') || t.includes('rate') || t.includes('unauthorized');
+    }
+
+    async function handleExcelFile(e){
+      const file = e.target.files && e.target.files[0];
+      if(!file) return;
+      const data = await file.arrayBuffer();
+      workbook = XLSX.read(data, { type: 'array' });
+      const sheetNames = workbook.SheetNames || [];
+      const sel = document.getElementById('sheetSelect');
+      sel.innerHTML = '<option value="">Seleccione...</option>' + sheetNames.map(n=>`<option value="${n}">${n}</option>`).join('');
+    }
+
+    function handleSheetSelect(){
+      const name = document.getElementById('sheetSelect').value;
+      if(!name || !workbook) return;
+      currentSheet = workbook.Sheets[name];
+      // Detectar encabezado escaneando primeras 20 filas
+      const all = XLSX.utils.sheet_to_json(currentSheet, { header: 1 });
+      let bestRow = 0; let bestScore = -1;
+      const keys = [
+        ['dni','documento','doc'],
+        ['nombre','nombres'],
+        ['apellido paterno','ap paterno','apellidopaterno','paterno'],
+        ['apellido materno','ap materno','apellidomaterno','materno']
+      ];
+      for(let r=0;r<Math.min(20, all.length);r++){
+        const row = all[r] || [];
+        let score=0;
+        for(const cell of row){
+          const t = normalizeStr(cell||'');
+          keys.flat().forEach(k=>{ if(t.includes(normalizeStr(k))) score++; });
+        }
+        if(score>bestScore){ bestScore=score; bestRow=r; }
+      }
+      headerRowIndex = bestRow;
+      excelHeaders = (all[headerRowIndex]||[]).map((h,i)=>{
+        const v = (h===undefined||h===null||String(h).trim()==='')?`Col ${String.fromCharCode(65+i)}`:String(h);
+        return v;
+      });
+      generateColumnMappingUI(excelHeaders, all);
+      renderExcelPreview();
+      updateRowCount();
+    }
+
+    function getMaxColsFromSheet(sheet, headersLen){
+      let maxCols = headersLen||0;
+      try{
+        if(sheet['!ref']){ const r=XLSX.utils.decode_range(sheet['!ref']); if(r && r.e && typeof r.e.c==='number'){ maxCols=Math.max(maxCols, r.e.c+1); } }
+      }catch(_){ }
+      return maxCols;
+    }
+
+    // Detecta automáticamente las columnas más probables para cada campo
+    function detectColumnMapping(headers, all){
+      const H = headers.map(h=>normalizeStr(h||''));
+      const firstData = all[headerRowIndex+1] || [];
+      const maxCols = getMaxColsFromSheet(currentSheet, headers.length);
+      const scores = Array.from({length:maxCols}, ()=>({}));
+      const kw = {
+        dni: ['dni','documento','doc','nro doc','numero','nro'],
+        nombres: ['nombre','nombres','nombres y apellidos','denominacion'],
+        apellidoPaterno: ['apellido paterno','ap paterno','apellidopaterno','paterno'],
+        apellidoMaterno: ['apellido materno','ap materno','apellidomaterno','materno']
+      };
+      for(let c=0;c<maxCols;c++){
+        const h = H[c]||'';
+        const v = normalizeStr(firstData[c]||'');
+        // DNI
+        scores[c].dni = 0;
+        if(/\b\d{8}\b/.test((firstData[c]||'').toString())) scores[c].dni += 3;
+        kw.dni.forEach(k=>{ if(h.includes(k)) scores[c].dni += 4; });
+        // Nombres
+        scores[c].nombres = 0;
+        kw.nombres.forEach(k=>{ if(h.includes(k)) scores[c].nombres += 3; });
+        if(/[a-zA-Záéíóúñ]+/.test((firstData[c]||'').toString())) scores[c].nombres += 1;
+        // Apellidos
+        scores[c].apellidoPaterno = 0; scores[c].apellidoMaterno = 0;
+        kw.apellidoPaterno.forEach(k=>{ if(h.includes(k)) scores[c].apellidoPaterno += 3; });
+        kw.apellidoMaterno.forEach(k=>{ if(h.includes(k)) scores[c].apellidoMaterno += 3; });
+      }
+      // Elegir columnas únicas por mayor score
+      const result = { dni: undefined, nombres: undefined, apellidoPaterno: undefined, apellidoMaterno: undefined };
+      const fields = ['dni','nombres','apellidoPaterno','apellidoMaterno'];
+      const used = new Set();
+      fields.forEach(f=>{
+        let best = -1, idx = undefined;
+        for(let c=0;c<scores.length;c++){
+          const sc = (scores[c][f]||0);
+          if(used.has(c)) continue;
+          if(sc>best){ best=sc; idx=c; }
+        }
+        if(best>0 && idx!==undefined){ result[f]=idx; used.add(idx); }
+      });
+      return result;
+    }
+
+    function generateColumnMappingUI(headers, all){
+      const container = document.getElementById('columnMapping');
+      container.innerHTML = '';
+      const fields = [
+        { key:'dni', label:'Número de DNI' },
+        { key:'nombres', label:'Nombres' },
+        { key:'apellidoPaterno', label:'Apellido Paterno' },
+        { key:'apellidoMaterno', label:'Apellido Materno' }
+      ];
+      const selects = [];
+      const maxCols = getMaxColsFromSheet(currentSheet, headers.length);
+      const autoMap = detectColumnMapping(headers, all);
+      fields.forEach(f=>{
+        const wrap = document.createElement('div'); wrap.className='col-12 col-md-6 col-lg-3';
+        const label = document.createElement('label'); label.className='form-label'; label.textContent=f.label;
+        const select = document.createElement('select'); select.className='form-select mapping-select'; select.dataset.field=f.key;
+        let options = '<option value="">Seleccione...</option>';
+        for(let c=0;c<maxCols;c++){
+          const name = headers[c] || `Col ${String.fromCharCode(65+c)}`;
+          const sample = (all[headerRowIndex+1]||[])[c];
+          const sampleTxt = sample!==undefined && sample!==null ? ` — ej: ${String(sample).toUpperCase().slice(0,14)}`:'';
+          options += `<option value="${c}">${name}${sampleTxt}</option>`;
+        }
+        select.innerHTML = options;
+        // Preseleccionar si fue detectado
+        if(autoMap[f.key] !== undefined) {
+          select.value = String(autoMap[f.key]);
+        }
+        select.addEventListener('change', ()=>{ updateVerifyButtonState(); updateRowCount(); });
+        wrap.appendChild(label); wrap.appendChild(select); container.appendChild(wrap); selects.push(select);
+      });
+      updateVerifyButtonState();
+      updateRowCount();
+    }
+
+    function updateVerifyButtonState(){
+      const btn = document.getElementById('btnVerificarExcel');
+      const selects = Array.from(document.querySelectorAll('.mapping-select'));
+      const dniSel = selects.find(s=>s.dataset.field==='dni');
+      const ok = !!dniSel && dniSel.value !== '';
+      btn.disabled = !ok;
+    }
+
+    function updateRowCount(){
+      const info = document.getElementById('rowCountInfo');
+      if(!info || !currentSheet) return;
+      try{
+        const all = XLSX.utils.sheet_to_json(currentSheet, { header: 1 });
+        const rows = all.slice(headerRowIndex+1);
+        const selects = Array.from(document.querySelectorAll('.mapping-select'));
+        const map={}; selects.forEach(s=>{ if(s.value!=='') map[s.dataset.field]=parseInt(s.value,10); });
+        let count=0;
+        if(map['dni']!==undefined){
+          const col = map['dni'];
+          count = rows.filter(r=>{ const v=(r[col]??'').toString().trim(); return v!=='' && (/^\d{8}$/.test(v) || v.length>0); }).length;
+        }else{ count = rows.filter(r=>Array.isArray(r) && r.some(c=>c!==null&&c!==undefined&&String(c).trim()!=='')).length; }
+        info.textContent = count>0? `Filas a verificar: ${count}`:'';
+      }catch(e){ console.warn('No se pudo calcular el conteo de filas:', e); }
+    }
+
+    function renderExcelPreview(){
+      const cont=document.getElementById('excelPreview'); const thead=document.getElementById('excelPreviewHead'); const tbody=document.getElementById('excelPreviewBody');
+      if(!cont||!thead||!tbody||!currentSheet) return;
+      try{
+        const all=XLSX.utils.sheet_to_json(currentSheet,{header:1}); if(!all||all.length===0){ cont.classList.add('d-none'); return; }
+        const headers=all[headerRowIndex]||[]; const rows=all.slice(headerRowIndex+1, headerRowIndex+11);
+        let maxCols = getMaxColsFromSheet(currentSheet, headers.length);
+        thead.innerHTML=''; const trh=document.createElement('tr');
+        for(let c=0;c<maxCols;c++){ const th=document.createElement('th'); const letter=c<26?String.fromCharCode(65+c):`Col ${c+1}`; th.textContent=(headers[c]&&String(headers[c]).trim()!=='')?String(headers[c]):`Col ${letter}`; trh.appendChild(th);} thead.appendChild(trh);
+        tbody.innerHTML=''; rows.forEach(r=>{ const tr=document.createElement('tr'); for(let c=0;c<maxCols;c++){ const td=document.createElement('td'); const v=r[c]; td.textContent=(v===undefined||v===null)?'':String(v); tr.appendChild(td);} tbody.appendChild(tr); });
+        cont.classList.remove('d-none');
+      }catch(e){ console.warn('No se pudo renderizar vista previa:', e); cont.classList.add('d-none'); }
+    }
+
+    async function verifyDni(dni){
+      const host = window.location.hostname;
+      const isLocal = ['localhost', '127.0.0.1'].includes(host);
+      const base = isLocal ? 'http://localhost:8787/api' : '/api';
+      const url = `${base}/dni?numero=${dni}`;
+      const maxTries = Math.max(1, apiTokenList?.length || 1);
+      let lastErr = 'Error desconocido';
+      if((apiTokenList?.length||0)===0 && !apiToken){
+        return { success:false, error:'No hay tokens configurados', code:'NO_TOKEN_CONFIGURED' };
+      }
+      let sawQuota = false;
+      for(let attempt=0; attempt<maxTries; attempt++){
+        const token = getActiveToken();
+        const headers = { 'X-API-Token': token, 'Accept': 'application/json' };
+        try {
+          const resp = await fetch(url, { headers });
+          const ct = (resp.headers.get('content-type')||'').toLowerCase();
+          const bodyText = await resp.text();
+          if(!resp.ok){
+            // HTML -> problema de routing
+            if(ct.includes('text/html')){
+              lastErr = `HTTP ${resp.status} (HTML recibido). Revisa netlify.toml`;
+            } else {
+              // JSON de error o texto
+              try { const err = JSON.parse(bodyText); lastErr = err.error || `HTTP ${resp.status}`; } catch(_){ lastErr = `HTTP ${resp.status}`; }
+            }
+            if(shouldRotateToken(resp.status, bodyText)) { sawQuota = true; advanceToken(); continue; }
+            return { success:false, error:lastErr };
+          }
+          if(ct.includes('application/json')){
+            try { const data = JSON.parse(bodyText); return { success:true, data }; } catch(_){ lastErr='Respuesta JSON inválida'; }
+          } else {
+            lastErr='Respuesta no JSON recibida';
+          }
+        } catch(e){
+          lastErr = e.message || 'Error de conexión';
+          // En errores de red, intenta rotar también
+          advanceToken();
+          continue;
+        }
+      }
+      if(sawQuota) return { success:false, error:lastErr, code:'TOKEN_QUOTA_EXHAUSTED' };
+      return { success:false, error: lastErr };
+    }
+
+    async function handleExcelVerification(){
+      if(!currentSheet) return;
+      const all = XLSX.utils.sheet_to_json(currentSheet, { header: 1 });
+      const rows = all.slice(headerRowIndex+1);
+      const selects = Array.from(document.querySelectorAll('.mapping-select'));
+      const map={}; selects.forEach(s=>{ if(s.value!=='') map[s.dataset.field]=parseInt(s.value,10); });
+      currentResults = [];
+      for(let i=0;i<rows.length;i++){
+        const row = rows[i]||[];
+        if(!row || row.every(c=>c===null||c===undefined||c==='')) continue;
+        const dni=(row[map['dni']]??'').toString().trim();
+        const nombres=(row[map['nombres']]??'').toString().trim();
+        const apPat=(row[map['apellidoPaterno']]??'').toString().trim();
+        const apMat=(row[map['apellidoMaterno']]??'').toString().trim();
+        if(!dni) continue;
+        try{
+          const res = await verifyDni(dni);
+          let status='danger', message='Error'; let det={};
+          if(res.code==='TOKEN_QUOTA_EXHAUSTED'){
+            // Completar el resto con mensaje de tokens agotados
+            const sheetRowNumber = headerRowIndex + 1 + (i + 1);
+            currentResults.push({ row: sheetRowNumber, dni, status:'danger', message:'Sin solicitudes disponibles en tus tokens', rawData: row });
+            for(let j=i+1;j<rows.length;j++){
+              const rj = rows[j]||[];
+              if(!rj || rj.every(c=>c===null||c===undefined||c==='')) continue;
+              const dnij=(rj[map['dni']]??'').toString().trim();
+              const sheetRowNumberJ = headerRowIndex + 1 + (j + 1);
+              currentResults.push({ row: sheetRowNumberJ, dni: dnij, status:'danger', message:'Sin solicitudes disponibles en tus tokens', rawData: rj });
+            }
+            break;
+          }
+          if(res.success && res.data){
+            const api=res.data;
+            const expNombre=firstToken(nombres), expApPat=firstToken(apPat), expApMat=firstToken(apMat);
+            const apiNombre=firstToken(api.first_name||''), apiApPat=firstToken(api.first_last_name||''), apiApMat=firstToken(api.second_last_name||'');
+            const matchNombre=!!expNombre && expNombre===apiNombre;
+            const matchApPat=!!expApPat && expApPat===apiApPat;
+            const matchApMat=!!expApMat && expApMat===apiApMat;
+            const matches=[matchNombre,matchApPat,matchApMat].filter(Boolean).length;
+            if(matches>=2 || (matchNombre && matchApPat)){ status='success'; message='Coincidencia exacta'; }
+            else if(matches===1){ status='warning'; message='Coincidencia parcial'; }
+            else { status='danger'; message='No coincide con los registros'; }
+            det={ apiNombre:api.first_name||'', apiApellidoPaterno:api.first_last_name||'', apiApellidoMaterno:api.second_last_name||'', excelNombre:nombres, excelApellidoPaterno:apPat, excelApellidoMaterno:apMat };
+          }
+          const sheetRowNumber = headerRowIndex + 1 + (i + 1);
+          currentResults.push({ row: sheetRowNumber, dni, status, message, ...det, rawData: row });
+        }catch(e){ const sheetRowNumber=headerRowIndex+1+(i+1); currentResults.push({ row: sheetRowNumber, dni, status:'danger', message:'Error al verificar', error:e.message, rawData:row }); }
+        if((i%5)===0) await new Promise(r=>setTimeout(r,50));
+      }
+      displayExcelResults(currentResults);
+      updateRowCount();
+    }
+
+    function displayExcelResults(results){
+      const tableBody=document.getElementById('excelResultsTableBody'); const excelResults=document.getElementById('excelResults');
+      if(!tableBody||!excelResults) return;
+      tableBody.innerHTML=''; let success=0, warning=0, error=0;
+      results.forEach(r=>{ if(r.status==='success') success++; else if(r.status==='warning') warning++; else error++;
+        const tr=document.createElement('tr');
+        const excelFull=`${r.excelApellidoPaterno||''} ${r.excelApellidoMaterno||''} ${r.excelNombre||''}`.trim();
+        const apiFull=`${r.apiApellidoPaterno||''} ${r.apiApellidoMaterno||''} ${r.apiNombre||''}`.trim();
+        tr.innerHTML=`
+          <td>${r.row}</td>
+          <td>${r.dni}</td>
+          <td>${excelFull}</td>
+          <td>${apiFull}</td>
+          <td><span class="badge bg-${r.status}">${r.status.toUpperCase()}</span></td>
+          <td>${r.message}</td>`;
+        tableBody.appendChild(tr);
+      });
+      excelResults.classList.remove('d-none');
+    }
+
+    async function copyReniecNames(){
+      const names = (currentResults||[]).map(r=>`${(r.apiApellidoPaterno||'').toString().trim()} ${(r.apiApellidoMaterno||'').toString().trim()} ${(r.apiNombre||'').toString().trim()}`.trim());
+      const filtered = names.filter(n=>n.length>0);
+      const text = filtered.join('\n');
+      try{
+        await navigator.clipboard.writeText(text);
+        alert(`Copiado: ${filtered.length} nombres`);
+      }catch(e){
+        const ta=document.createElement('textarea');
+        ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+        alert(`Copiado: ${filtered.length} nombres`);
+      }
+    }
+
+    // ============= Consulta Individual =============
+    async function handleSingleVerification(){
+      const dni = (document.getElementById('singleDni').value || '').trim();
+      const tbody = document.getElementById('singleResultBody');
+      const cont = document.getElementById('singleResult');
+      if(!dni){
+        tbody.innerHTML = `<tr><td colspan="4" class="text-muted">Ingrese un DNI</td></tr>`;
+        cont.classList.remove('d-none');
+        return;
+      }
+      tbody.innerHTML = `<tr><td colspan="4">Verificando...</td></tr>`;
+      cont.classList.remove('d-none');
+      const res = await verifyDni(dni);
+      if(res.success && res.data){
+        const api = res.data;
+        const nombre = `${api.first_last_name||''} ${api.second_last_name||''} ${api.first_name||''}`.trim();
+        tbody.innerHTML = `<tr>
+            <td>${dni}</td>
+            <td>${nombre}</td>
+            <td><span class="badge bg-success">SUCCESS</span></td>
+            <td>Consulta exitosa</td>
+        </tr>`;
+      } else {
+        tbody.innerHTML = `<tr>
+            <td>${dni}</td>
+            <td>-</td>
+            <td><span class="badge bg-danger">DANGER</span></td>
+            <td>${res.error || 'Error'}</td>
+        </tr>`;
+      }
+    }
+
+    // ============= Consulta Múltiple =============
+    function parseBulkDnis(text){
+      return (text||'')
+        .split(/[\n,;]+/)
+        .map(s=>s.trim())
+        .filter(s=>s.length>0);
+    }
+
+    async function handleBulkVerification(){
+      const raw = document.getElementById('bulkDnis').value || '';
+      const dnis = parseBulkDnis(raw);
+      const tbody = document.getElementById('bulkResultsBody');
+      const cont = document.getElementById('bulkResults');
+      if(dnis.length===0){
+        tbody.innerHTML = `<tr><td colspan="5" class="text-muted">Ingrese uno o más DNIs</td></tr>`;
+        cont.classList.remove('d-none');
+        return;
+      }
+      cont.classList.remove('d-none');
+      tbody.innerHTML = '';
+      let idx=0;
+      for(const dni of dnis){
+        idx++;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${idx}</td><td>${dni}</td><td>-</td><td><span class="badge bg-warning">...</span></td><td>Procesando</td>`;
+        tbody.appendChild(tr);
+        try{
+          const res = await verifyDni(dni);
+          if(res.code==='TOKEN_QUOTA_EXHAUSTED'){
+            tr.innerHTML = `<td>${idx}</td><td>${dni}</td><td>-</td><td><span class="badge bg-danger">DANGER</span></td><td>Sin solicitudes disponibles en tus tokens</td>`;
+            // Llenar el resto igualmente en estado agotado
+            let k = idx+1;
+            for(let m=dnis.indexOf(dni)+1; m<dnis.length; m++, k++){
+              const drest = dnis[m];
+              const tr2 = document.createElement('tr');
+              tr2.innerHTML = `<td>${k}</td><td>${drest}</td><td>-</td><td><span class=\"badge bg-danger\">DANGER</span></td><td>Sin solicitudes disponibles en tus tokens</td>`;
+              tbody.appendChild(tr2);
+            }
+            break;
+          }
+          if(res.success && res.data){
+            const api = res.data;
+            const nombre = `${api.first_last_name||''} ${api.second_last_name||''} ${api.first_name||''}`.trim();
+            tr.innerHTML = `<td>${idx}</td><td>${dni}</td><td>${nombre}</td><td><span class="badge bg-success">SUCCESS</span></td><td>Consulta exitosa</td>`;
+          }else{
+            tr.innerHTML = `<td>${idx}</td><td>${dni}</td><td>-</td><td><span class="badge bg-danger">DANGER</span></td><td>${res.error || 'Error'}</td>`;
+          }
+        }catch(e){
+          tr.innerHTML = `<td>${idx}</td><td>${dni}</td><td>-</td><td><span class="badge bg-danger">DANGER</span></td><td>${e.message || 'Error'}</td>`;
+        }
+        // Respiro para no saturar
+        await new Promise(r=>setTimeout(r, 80));
+      }
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
