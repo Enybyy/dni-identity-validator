@@ -1,3 +1,24 @@
+## 🇬🇧 English Summary
+
+**Serverless identity validation tool with batch processing for onboarding and KYC.**
+
+**The problem:** verifying identity documents one at a time against an external registry is slow and does not scale for onboarding or KYC workflows.
+
+**The solution:** a serverless validation tool with a CORS proxy and batch processing, so hundreds of records can be checked in a single pass.
+
+- Batch validation from a file upload
+- CORS proxy layer to reach the external registry from the browser
+- Structured, exportable results for onboarding and compliance review
+
+**Stack:** JavaScript · Serverless Functions · REST APIs
+
+🔗 **[Live demo](https://enybyy.github.io/dni-identity-validator/)**
+
+---
+
+<details>
+<summary>📖 <b>Documentación completa en español</b> (click para expandir)</summary>
+
 # 🪪 DNI Identity Validator — Servicio Serverless & Herramienta de Verificación de Identidad
 > **API Serverless con Reverse Proxy seguro (Cloudflare Pages Functions), interfaz web y procesador por lotes para validación de DNI (RENIEC / Decolecta).**
 
@@ -73,3 +94,6 @@ Diseño e implemento **arquitecturas serverless seguras, integraciones con APIs 
 - **LinkedIn**: [Eliud RM](https://www.linkedin.com/in/eliud-rojas-mendoza-414652212/)
 - **GitHub**: [@Enybyy](https://github.com/Enybyy)
 - *Disponible para proyectos freelance y consultoría tecnológica.*
+
+
+</details>
