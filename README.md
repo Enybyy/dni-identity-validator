@@ -12,7 +12,7 @@ Revisión de registros individuales y listas CSV o Excel, con comparación de no
 
 [![DNI Studio en uso](assets/screenshots/portfolio-1000x750.png)](https://enybyy.github.io/dni-identity-validator/)
 
-*La ficha utiliza datos ficticios; la aplicación no consulta registros oficiales ni acredita identidades.*
+*La ficha utiliza datos ficticios; la aplicación DEMO no consulta registros oficiales ni acredita identidades.*
 
 [Acerca del proyecto](#acerca-del-proyecto) · [Capturas](#capturas) · [Recorrido](#en-el-día-a-día) · [Tecnología](#cómo-está-construido) · [Uso local](#uso-local)
 
