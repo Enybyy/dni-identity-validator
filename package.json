@@ -1,0 +1,7 @@
+{
+  "name": "dni-studio",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Local DNI format and fictional-data review demo",
+  "scripts": { "test": "node --test tests/core.test.cjs", "start": "python -m http.server 5082 --bind 127.0.0.1" }
+}

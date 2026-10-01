@@ -1,295 +1,41 @@
-<!DOCTYPE html>
-<html lang="es" class="dark">
+<!doctype html>
+<html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DNI Identity Validator — Showcase Interactivo</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: { 500: '#0284c7', 600: '#0369a1', 700: '#075985' }
-          }
-        }
-      }
-    }
-  </script>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Demo local para validar formato de DNI, importar listas y revisar coincidencias con datos ficticios.">
+  <title>DNI Studio · Revisión de datos</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <script src="assets/core.js" defer></script><script src="assets/xlsx.js" defer></script><script src="assets/app.js" defer></script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans">
-
-  <!-- Portfolio Header Showcase -->
-  <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-50 px-4 py-3">
-    <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-3 text-sm">
-      <div class="flex items-center gap-2">
-        <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span>
-        <span class="font-semibold text-white">DNI Identity Validator</span>
-        <span class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700">Cloudflare Serverless + Python</span>
-      </div>
-      <div class="flex items-center gap-4">
-        <a href="https://github.com/Enybyy/dni-identity-validator" target="_blank" class="text-slate-300 hover:text-white flex items-center gap-1.5 transition">
-          <i class="fa-brands fa-github"></i> <span>Ver Repositorio</span>
-        </a>
-        <a href="https://www.linkedin.com/in/eliud-rojas-mendoza-414652212/" target="_blank" class="bg-sky-600 hover:bg-sky-500 text-white font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition text-xs">
-          <i class="fa-brands fa-linkedin"></i> <span>Contactar a Eliud RM</span>
-        </a>
-      </div>
-    </div>
-  </header>
-
-  <!-- Hero Section -->
-  <section class="max-w-7xl mx-auto w-full px-4 pt-8 pb-4 text-center">
-    <div class="inline-flex items-center gap-2 bg-sky-500/10 border border-sky-500/30 text-sky-400 px-3 py-1 rounded-full text-xs font-medium mb-3">
-      <i class="fa-solid fa-shield-halved"></i> Verificación de Identidad Segura & Auditoría Masiva
-    </div>
-    <h1 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight mb-2">
-      Servicio Serverless y Herramienta de Validación de DNI
-    </h1>
-    <p class="text-slate-400 max-w-2xl mx-auto text-sm md:text-base">
-      Demostración interactiva de verificación en tiempo real con proxy CORS seguro y panel de auditoría de inconsistencias en bases de datos de Excel.
-    </p>
-
-    <!-- Tabs -->
-    <div class="flex justify-center gap-2 mt-6">
-      <button id="tab-single" onclick="switchTab('single')" class="px-5 py-2.5 rounded-lg font-medium text-sm transition bg-sky-600 text-white flex items-center gap-2">
-        <i class="fa-solid fa-user-check"></i> Consulta Individual
-      </button>
-      <button id="tab-batch" onclick="switchTab('batch')" class="px-5 py-2.5 rounded-lg font-medium text-sm transition bg-slate-800 text-slate-300 hover:bg-slate-700 flex items-center gap-2">
-        <i class="fa-solid fa-file-excel"></i> Auditoría Masiva (Batch Excel)
-      </button>
-    </div>
-  </section>
-
-  <!-- Main Container -->
-  <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-1">
-    
-    <!-- Tab 1: Single Verification -->
-    <div id="view-single" class="grid md:grid-cols-12 gap-8 items-start">
-      <!-- Input Card -->
-      <div class="md:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-        <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <i class="fa-solid fa-id-card text-sky-400"></i> Consultar Documento
-        </h2>
-        <label class="block text-xs font-medium text-slate-400 mb-1.5">Número de DNI (8 dígitos)</label>
-        <div class="relative mb-4">
-          <input type="text" id="dni-input" maxlength="8" value="72109482" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-lg font-mono text-white tracking-widest focus:outline-none focus:border-sky-500 transition" placeholder="12345678">
-          <button onclick="validarDNI()" class="absolute right-2 top-2 bottom-2 bg-sky-600 hover:bg-sky-500 text-white px-4 rounded-lg font-medium text-sm flex items-center gap-1.5 transition">
-            <span>Consultar</span> <i class="fa-solid fa-magnifying-glass"></i>
-          </button>
-        </div>
-
-        <div class="mb-4">
-          <span class="text-xs text-slate-400 block mb-2">Prueba rápida con ejemplos:</span>
-          <div class="flex flex-wrap gap-2">
-            <button onclick="setEjemplo('72109482', 'María Elena', 'Rodríguez Silva', 'Lima, Perú', 'Activo / Válido')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-md border border-slate-700 transition">72109482</button>
-            <button onclick="setEjemplo('45892134', 'Juan Carlos', 'Pérez Mendoza', 'Arequipa, Perú', 'Activo / Válido')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-md border border-slate-700 transition">45892134</button>
-            <button onclick="setEjemplo('40918273', 'Carlos Eduardo', 'Quispe Gómez', 'Cusco, Perú', 'Observado / Homónimo')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-md border border-slate-700 transition">40918273</button>
-          </div>
-        </div>
-
-        <div class="bg-slate-950/60 rounded-xl p-4 border border-slate-800/80 text-xs text-slate-400 space-y-2">
-          <div class="flex items-center gap-2 text-emerald-400 font-medium">
-            <i class="fa-solid fa-lock"></i> Proxy Serverless Seguro
-          </div>
-          <p>Las solicitudes se canalizan a través de Cloudflare Pages Functions, protegiendo las credenciales upstream y aplicando cabeceras CORS automáticas.</p>
-        </div>
-      </div>
-
-      <!-- Result Card (Digital ID) -->
-      <div class="md:col-span-7">
-        <div id="card-id" class="bg-gradient-to-br from-slate-900 via-slate-850 to-slate-900 border border-slate-700/60 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
-          <div class="absolute -right-12 -top-12 w-48 h-48 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-          <div class="flex justify-between items-start border-b border-slate-800 pb-4 mb-6">
-            <div>
-              <span class="text-xs text-sky-400 font-bold tracking-wider uppercase">República del Perú</span>
-              <h3 class="text-xl font-bold text-white">Registro Nacional de Identidad</h3>
-            </div>
-            <div id="status-badge" class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1.5">
-              <i class="fa-solid fa-circle-check"></i> Válido & Vigente
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 items-center">
-            <!-- Photo Placeholder -->
-            <div class="flex flex-col items-center justify-center p-4 bg-slate-950 border border-slate-800 rounded-xl">
-              <div class="w-24 h-28 bg-slate-800 rounded-lg flex items-center justify-center text-slate-600 mb-2 overflow-hidden border border-slate-700">
-                <i class="fa-solid fa-user text-4xl text-slate-500"></i>
-              </div>
-              <span class="text-[10px] text-slate-400 uppercase tracking-wider font-mono">FOTO DIGITAL</span>
-            </div>
-
-            <!-- Details -->
-            <div class="sm:col-span-2 space-y-3">
-              <div>
-                <span class="text-[11px] text-slate-400 uppercase block">Nombres</span>
-                <span id="res-nombres" class="text-base font-bold text-white">María Elena</span>
-              </div>
-              <div>
-                <span class="text-[11px] text-slate-400 uppercase block">Apellidos</span>
-                <span id="res-apellidos" class="text-base font-bold text-white">Rodríguez Silva</span>
-              </div>
-              <div class="grid grid-cols-2 gap-2">
-                <div>
-                  <span class="text-[11px] text-slate-400 uppercase block">DNI</span>
-                  <span id="res-dni" class="text-sm font-mono font-bold text-sky-400">72109482</span>
-                </div>
-                <div>
-                  <span class="text-[11px] text-slate-400 uppercase block">Dígito Verif.</span>
-                  <span id="res-dv" class="text-sm font-mono font-bold text-slate-200">4</span>
-                </div>
-              </div>
-              <div>
-                <span class="text-[11px] text-slate-400 uppercase block">Ubicación Registrada</span>
-                <span id="res-ubigeo" class="text-xs text-slate-300">Lima - Lima - San Isidro</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="mt-6 pt-4 border-t border-slate-800 flex justify-between items-center text-xs text-slate-400">
-            <span>Verificado vía Cloudflare Pages API</span>
-            <span class="font-mono text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-bolt"></i> 180 ms</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tab 2: Batch Audit View -->
-    <div id="view-batch" class="hidden space-y-6">
-      <!-- Stats Row -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
-          <span class="text-xs text-slate-400">Total Auditados</span>
-          <p class="text-2xl font-bold text-white mt-1">1,240</p>
-          <span class="text-xs text-sky-400">Archivo Excel procesado</span>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
-          <span class="text-xs text-slate-400">Coincidentes (OK)</span>
-          <p class="text-2xl font-bold text-emerald-400 mt-1">1,198</p>
-          <span class="text-xs text-emerald-500">96.6% del lote</span>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
-          <span class="text-xs text-slate-400">Inconsistencias / Errores</span>
-          <p class="text-2xl font-bold text-amber-400 mt-1">42</p>
-          <span class="text-xs text-amber-500">3.4% detectados</span>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
-          <span class="text-xs text-slate-400">Tiempo de Proceso</span>
-          <p class="text-2xl font-bold text-sky-400 mt-1">4.2 min</p>
-          <span class="text-xs text-slate-400">vs 3 días manual</span>
-        </div>
-      </div>
-
-      <!-- Table Section -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-        <div class="p-4 border-b border-slate-800 flex flex-wrap justify-between items-center gap-3">
-          <div class="flex items-center gap-2">
-            <i class="fa-solid fa-table-list text-sky-400"></i>
-            <h3 class="font-bold text-white text-sm">Registros Auditados desde Excel</h3>
-          </div>
-          <div class="flex gap-2">
-            <input type="text" placeholder="Filtrar por nombre o DNI..." class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500">
-            <button class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition">
-              <i class="fa-solid fa-download"></i> Exportar Resultados
-            </button>
-          </div>
-        </div>
-
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs text-slate-300">
-            <thead class="bg-slate-950 text-slate-400 uppercase font-mono text-[11px] border-b border-slate-800">
-              <tr>
-                <th class="p-3">Fila Excel</th>
-                <th class="p-3">DNI</th>
-                <th class="p-3">Nombre en Base Interna</th>
-                <th class="p-3">Nombre Oficial RENIEC</th>
-                <th class="p-3">Estado Auditoría</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-800">
-              <tr class="hover:bg-slate-850/50 transition">
-                <td class="p-3 font-mono text-slate-500">#001</td>
-                <td class="p-3 font-mono font-bold text-sky-400">45892134</td>
-                <td class="p-3">Pérez Mendoza, Juan</td>
-                <td class="p-3 text-emerald-400">PÉREZ MENDOZA, JUAN CARLOS</td>
-                <td class="p-3"><span class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30">Válido</span></td>
-              </tr>
-              <tr class="hover:bg-slate-850/50 transition bg-amber-500/5">
-                <td class="p-3 font-mono text-slate-500">#002</td>
-                <td class="p-3 font-mono font-bold text-amber-400">72109480</td>
-                <td class="p-3">Rodríguez Silva, Maria</td>
-                <td class="p-3 text-amber-400 font-semibold">RODRÍGUEZ SILVA, MARTHA</td>
-                <td class="p-3"><span class="bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/30">Discrepancia Nombre</span></td>
-              </tr>
-              <tr class="hover:bg-slate-850/50 transition">
-                <td class="p-3 font-mono text-slate-500">#003</td>
-                <td class="p-3 font-mono font-bold text-sky-400">73928174</td>
-                <td class="p-3">Fernández Ramos, Lucía</td>
-                <td class="p-3 text-emerald-400">FERNÁNDEZ RAMOS, LUCÍA ISABEL</td>
-                <td class="p-3"><span class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30">Válido</span></td>
-              </tr>
-              <tr class="hover:bg-slate-850/50 transition bg-rose-500/5">
-                <td class="p-3 font-mono text-slate-500">#004</td>
-                <td class="p-3 font-mono font-bold text-rose-400">99201928</td>
-                <td class="p-3">Alvarez Torres, Pedro</td>
-                <td class="p-3 text-rose-400 font-semibold">NO REGISTRADO EN RENIEC</td>
-                <td class="p-3"><span class="bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded border border-rose-500/30">DNI Inexistente</span></td>
-              </tr>
-              <tr class="hover:bg-slate-850/50 transition">
-                <td class="p-3 font-mono text-slate-500">#005</td>
-                <td class="p-3 font-mono font-bold text-sky-400">40918273</td>
-                <td class="p-3">Quispe Gómez, Carlos E.</td>
-                <td class="p-3 text-emerald-400">QUISPE GÓMEZ, CARLOS EDUARDO</td>
-                <td class="p-3"><span class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30">Válido</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <footer class="bg-slate-950 border-t border-slate-800 text-center py-4 text-xs text-slate-500">
-    Desarrollado por <a href="https://github.com/Enybyy" class="text-sky-400 hover:underline">Eliud RM</a> — Soluciones de Software & Automatización Freelance
-  </footer>
-
-  <script>
-    function switchTab(tab) {
-      if (tab === 'single') {
-        document.getElementById('view-single').classList.remove('hidden');
-        document.getElementById('view-batch').classList.add('hidden');
-        document.getElementById('tab-single').className = "px-5 py-2.5 rounded-lg font-medium text-sm transition bg-sky-600 text-white flex items-center gap-2";
-        document.getElementById('tab-batch').className = "px-5 py-2.5 rounded-lg font-medium text-sm transition bg-slate-800 text-slate-300 hover:bg-slate-700 flex items-center gap-2";
-      } else {
-        document.getElementById('view-single').classList.add('hidden');
-        document.getElementById('view-batch').classList.remove('hidden');
-        document.getElementById('tab-single').className = "px-5 py-2.5 rounded-lg font-medium text-sm transition bg-slate-800 text-slate-300 hover:bg-slate-700 flex items-center gap-2";
-        document.getElementById('tab-batch').className = "px-5 py-2.5 rounded-lg font-medium text-sm transition bg-sky-600 text-white flex items-center gap-2";
-      }
-    }
-
-    function setEjemplo(dni, nombres, apellidos, ubigeo, estado) {
-      document.getElementById('dni-input').value = dni;
-      document.getElementById('res-dni').innerText = dni;
-      document.getElementById('res-nombres').innerText = nombres;
-      document.getElementById('res-apellidos').innerText = apellidos;
-      document.getElementById('res-ubigeo').innerText = ubigeo;
-    }
-
-    function validarDNI() {
-      const val = document.getElementById('dni-input').value;
-      if (val.length !== 8) {
-        alert('Ingresa un número de DNI válido de 8 dígitos');
-        return;
-      }
-      document.getElementById('res-dni').innerText = val;
-      document.getElementById('res-nombres').innerText = 'Consulta Exitosa';
-      document.getElementById('res-apellidos').innerText = 'Validado en RENIEC';
-    }
-  </script>
-</body>
-</html>
+<body>
+<header class="masthead"><a class="brand" href="./" aria-label="DNI Studio, inicio"><span class="brand-icon" aria-hidden="true">id</span><span>DNI <strong>Studio</strong></span></a><nav aria-label="Enlaces del proyecto"><a href="https://github.com/Enybyy/dni-identity-validator">Código en GitHub <span aria-hidden="true">↗</span></a><a href="https://github.com/Enybyy/dni-identity-validator#ejecución-local">Instalación</a></nav></header>
+<main>
+<div class="intro"><div><h1>Cada registro,<br> más claro.</h1><p>Consulta una ficha, compara nombres y revisa tu lista<br class="desktop"> antes de exportar los resultados.</p></div><div class="demo-note"><span class="demo-dot" aria-hidden="true"></span><div><strong>Demo con datos ficticios</strong><p>Prueba cualquier DNI de 8 dígitos.<br>No consulta registros oficiales.</p></div></div></div>
+<div class="workbench">
+<section class="controls" aria-label="Entrada de datos">
+<div class="tabs" role="tablist" aria-label="Modo de revisión"><button type="button" role="tab" id="single-tab" aria-controls="single-panel" aria-selected="true" tabindex="0">Una ficha</button><button type="button" role="tab" id="batch-tab" aria-controls="batch-panel" aria-selected="false" tabindex="-1">Una lista</button></div>
+<div id="single-panel" role="tabpanel" aria-labelledby="single-tab">
+<form id="lookup" novalidate><label for="dni">Número de DNI</label><div class="number-input"><span aria-hidden="true">#</span><input id="dni" name="dni" type="text" inputmode="numeric" autocomplete="off" maxlength="32" value="12345678" aria-describedby="dni-help lookup-error"></div><p id="dni-help" class="helper">8 dígitos. Conservamos los ceros iniciales.</p><button class="primary wide" type="submit">Consultar ficha <span aria-hidden="true">↗</span></button><p id="lookup-error" class="error" role="alert"></p></form>
+<div class="example"><span>Prueba también</span><div><button type="button" class="chip" data-dni="87654321">87654321</button><button type="button" class="chip" data-dni="00123456">00123456</button></div></div>
+<div class="compare"><label for="compare-name">Nombre para comparar <span>opcional</span></label><input id="compare-name" type="text" placeholder="Nombre y ambos apellidos" maxlength="180"><button type="button" id="compare" class="secondary wide">Comparar nombre completo</button><p id="comparison" class="helper" role="status">La comparación usa todos los nombres y apellidos.</p></div>
+<p class="privacy">Sin cuentas. Sin tokens. Los datos que ingresas se procesan en este navegador.</p>
+</div>
+<div id="batch-panel" role="tabpanel" aria-labelledby="batch-tab" hidden>
+<label for="batch-text">Pega tus registros</label><textarea id="batch-text" rows="5" placeholder="DNI,nombre completo&#10;12345678,Nombre Apellido Apellido&#10;00123456,"></textarea><p class="helper">Un DNI por línea o una tabla CSV con encabezados.</p><div class="inline-actions"><button class="secondary" id="use-paste" type="button">Leer lista</button><button class="text-button" id="sample" type="button">Cargar ejemplo</button></div>
+<label class="upload" for="file"><span aria-hidden="true">↥</span><strong>Importar CSV o Excel</strong><small>.csv / .xlsx · hasta 5 MB</small></label><input type="file" id="file" accept=".csv,.xlsx" class="file-input">
+<div id="mapping" hidden><label for="sheet">Hoja</label><select id="sheet"></select><div class="mapping-grid"><div><label for="dni-column">Columna DNI</label><select id="dni-column"></select></div><div><label for="name-column">Nombre completo</label><select id="name-column"></select></div></div><p id="row-info" class="helper"></p><button type="button" id="process" class="primary wide">Revisar lista</button></div>
+<p id="batch-error" class="error" role="alert"></p><p class="privacy">Hasta 2.000 registros. Compara nombres completos con la ficha ficticia de la demo.</p>
+</div>
+</section>
+<section class="output" aria-label="Resultados">
+<div id="profile-view"><div class="output-heading"><h2>Ficha de referencia</h2><span class="status-pill">Formato correcto</span></div>
+<article class="identity-card" aria-label="Ficha de datos ficticios"><div class="card-top"><span>Ficha de demostración</span><span class="demo-tag">Ficticio</span></div><div class="card-body"><div class="avatar" aria-hidden="true"><svg viewBox="0 0 100 120"><circle cx="50" cy="40" r="23"/><path d="M12 112v-10c0-22 17-37 38-37s38 15 38 37v10z"/></svg><span id="initials">LM</span></div><div class="identity"><span class="field-label">Nombres y apellidos</span><h3 id="full-name"></h3><div class="identity-number"><span>DNI</span><strong id="card-dni"></strong></div><div class="location"><span class="field-label">Ubicación de ejemplo</span><p id="location"></p></div></div></div><div class="card-foot"><span>Datos generados localmente</span><span>Sin valor oficial</span></div></article>
+<div class="details"><div><span>Nombres</span><strong id="names"></strong></div><div><span>Apellido paterno</span><strong id="paternal"></strong></div><div><span>Apellido materno</span><strong id="maternal"></strong></div></div>
+<div class="result-actions"><button id="copy" type="button" class="secondary">Copiar datos</button><button id="download-profile" type="button" class="text-button">Descargar ficha JSON <span aria-hidden="true">↓</span></button></div><p id="copy-status" class="helper" role="status"></p>
+<p class="explanation">La misma entrada siempre genera la misma ficha ficticia. Validar el formato de un DNI no confirma que exista ni acredita la identidad de una persona.</p></div>
+<div id="list-view" hidden><div class="output-heading"><h2>Revisión de la lista</h2><span class="demo-tag">Datos ficticios</span></div><div id="empty-list"><div class="empty-symbol" aria-hidden="true">≡</div><h3>Tu lista, bajo revisión.</h3><p>Importa una hoja, elige las columnas y compara los registros en un solo lugar.</p><button type="button" id="sample-empty" class="secondary">Probar con una lista ficticia</button></div><div id="batch-results" hidden><div class="batch-summary" id="summary" role="status"></div><div class="table-wrap" tabindex="0" aria-label="Resultados por registro"><table><thead><tr><th scope="col">DNI / fila</th><th scope="col">Nombre de referencia ficticio</th><th scope="col">Revisión</th></tr></thead><tbody id="results-body"></tbody></table></div><div class="result-actions"><button id="export" class="primary" type="button">Exportar CSV <span aria-hidden="true">↓</span></button><span class="helper">Incluye fuente ficticia y duplicados.</span></div><p class="explanation">«Coincide» compara texto completo con la ficha de demo, omitiendo tildes, mayúsculas y espacios repetidos. No certifica datos de identidad.</p></div></div>
+</section>
+</div>
+<footer><span>Diseñado para revisar datos con criterio.</span><span>DNI Studio · Proyecto de Eliud Rojas</span></footer>
+</main>
+</body></html>

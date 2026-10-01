@@ -1,99 +1,85 @@
-## 🇬🇧 English Summary
+# DNI Studio
 
-**Serverless identity validation tool with batch processing for onboarding and KYC.**
+Aplicación web para revisar el formato de DNIs, comparar nombres completos e importar listas CSV o Excel con datos ficticios de demostración.
 
-**The problem:** verifying identity documents one at a time against an external registry is slow and does not scale for onboarding or KYC workflows.
+![Consulta de una ficha ficticia en DNI Studio](assets/screenshots/portfolio-1000x750.png)
 
-**The solution:** a serverless validation tool with a CORS proxy and batch processing, so hundreds of records can be checked in a single pass.
+[Abrir demo](https://enybyy.github.io/dni-identity-validator/) · [Ver capturas](assets/screenshots/) · [Evidencia de pruebas](docs/verification.md)
 
-- Batch validation from a file upload
-- CORS proxy layer to reach the external registry from the browser
-- Structured, exportable results for onboarding and compliance review
+## Ejecución local
 
-**Stack:** JavaScript · Serverless Functions · REST APIs
+Requiere Python 3 para servir los archivos. La aplicación no tiene dependencias de red, cuentas ni claves API.
 
-🔗 **[Live demo](https://enybyy.github.io/dni-identity-validator/)**
+```powershell
+git clone https://github.com/Enybyy/dni-identity-validator.git
+cd dni-identity-validator
+python -m http.server 5082 --bind 127.0.0.1
+```
 
----
+Abre `http://127.0.0.1:5082`. Para publicar la misma aplicación, configura GitHub Pages sobre la raíz de la rama principal.
 
-<details>
-<summary>📖 <b>Documentación completa en español</b> (click para expandir)</summary>
+## Uso
 
-# 🪪 DNI Identity Validator — Servicio Serverless & Herramienta de Verificación de Identidad
-> **API Serverless con Reverse Proxy seguro (Cloudflare Pages Functions), interfaz web y procesador por lotes para validación de DNI (RENIEC / Decolecta).**
+- **Una ficha:** escribe exactamente ocho dígitos. Cada entrada genera siempre el mismo nombre ficticio; conserva ceros iniciales. Puedes comparar el nombre completo, copiar los datos o descargar JSON.
+- **Una lista:** pega un DNI por línea o una tabla CSV con encabezados, importa `.csv` o `.xlsx`, selecciona la hoja y las columnas DNI y nombre completo, y pulsa **Revisar lista**.
+- **Resultados:** distingue formato inválido, nombre por revisar, coincidencia con la demo y registros sin nombre para comparar. Señala los DNIs repetidos. Exporta CSV con la fuente ficticia identificada en cada fila.
+- **Ejemplos:** el botón **Cargar ejemplo** presenta coincidencias, un nombre diferente, un duplicado y un DNI incompleto. También se incluyen [CSV](examples/registros.csv) y [Excel con dos hojas](examples/registros.xlsx).
 
-<p align="center">
-  <a href="https://enybyy.github.io/dni-identity-validator/" target="_blank">
-    <img src="https://img.shields.io/badge/▶️_PROBAR_DEMO_EN_VIVO-GitHub_Pages-22c55e?style=for-the-badge&logo=github&logoColor=white" alt="Demo en Vivo" />
-  </a>
-  <a href="https://www.linkedin.com/in/eliud-rojas-mendoza-414652212/" target="_blank">
-    <img src="https://img.shields.io/badge/LinkedIn-Eliud_RM-0284c7?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn" />
-  </a>
-</p>
+La primera fila de cada archivo debe contener los encabezados. El nombre a comparar debe estar en una única columna con nombres y ambos apellidos. Se omiten diferencias de tildes, mayúsculas y espacios repetidos; no se considera suficiente que coincida solo el primer nombre.
 
-<p align="center">
-  <img src="assets/screenshots/screenshot-dni-lookup.png" alt="Consulta y Validación Individual" width="48%" style="border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);" />
-  <img src="assets/screenshots/screenshot-dni-audit.png" alt="Panel de Auditoría Masiva desde Excel" width="48%" style="border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);" />
-</p>
+Al usar Excel, guarda la columna DNI como texto. Si el libro ya perdió los ceros iniciales, la aplicación informa formato inválido en lugar de inventar los dígitos faltantes. Al volver a abrir un CSV en Excel, importa también esa columna como texto.
 
-[![Serverless](https://img.shields.io/badge/Architecture-Cloudflare%20Edge%20Workers-f38020.svg)](#-arquitectura-y-seguridad)
-[![Python](https://img.shields.io/badge/Batch%20Processing-Python%20%7C%20Pandas-3776ab.svg)](#-procesamiento-por-lotes-python)
-[![Status](https://img.shields.io/badge/Status-Production%20Ready-success.svg)](#)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+## Qué demuestra
 
----
+Un flujo funcional de entrada, validación, revisión por lotes y exportación. **No consulta registros oficiales, no verifica que un DNI exista y no acredita identidades.** Todos los nombres y ubicaciones son ficticios; una coincidencia con la demo compara texto, no constituye una verificación real. El diseño de la ficha no representa un carné oficial.
 
-## 📌 El Desafío de Negocio
+El proyecto reemplaza las páginas anteriores y el proxy ligado a un proveedor específico por una aplicación estática independiente. La integración con un servicio real no forma parte de esta versión. Las claves de cualquier futura integración deben permanecer en un servidor propio.
 
-En procesos de onboarding de clientes, contratación de personal, emisión de comprobantes o plataformas financieras, la verificación de identidad mediante el Documento Nacional de Identidad (DNI) es obligatoria y crítica:
-1. **Exposición de Credenciales**: Al conectar aplicaciones web directamente a APIs de consulta de identidad, los tokens privados quedan expuestos en el código del navegador del cliente, abriendo brechas graves de seguridad.
-2. **Problemas de CORS y Bloqueos de Red**: Las APIs gubernamentales o de terceros bloquean solicitudes directas de navegadores por políticas de *Cross-Origin Resource Sharing* (CORS).
-3. **Validación Manual Ineficiente**: Validar cientos de registros ingresados manualmente en formularios provoca demoras de días y altas tasas de error tipográfico en nombres y apellidos.
+## Pruebas
 
----
+Las pruebas del núcleo requieren Node.js 18 o posterior y no requieren instalar paquetes.
 
-## 💡 La Solución Implementada
+```powershell
+node --test tests/core.test.cjs
+```
 
-Este proyecto implementa una **solución integral y segura de verificación de identidad**:
-1. **API Gateway / Proxy Serverless en el Edge (`functions/api/dni.js`)**:
-   - Construido sobre **Cloudflare Pages Functions**.
-   - Resuelve problemas de CORS mediante el manejo transparente de solicitudes preflight (`OPTIONS`).
-   - Oculta el token upstream (`DECOLECTA_TOKEN`) en variables de entorno del servidor.
-2. **Interfaz Web de Consulta en Tiempo Real (`verificador_dni.html` & Showcase)**:
-   - Validación instantánea al escribir el número de DNI con retorno en menos de 500 ms.
-3. **Motor de Procesamiento y Auditoría por Lotes (`analizar_excel.py`)**:
-   - Automatización en Python para leer hojas de cálculo de Excel con miles de filas y exportar reportes consolidados con datos verificados o anomalías detectadas.
+La prueba de navegador requiere Playwright y Chromium instalados. Con el servidor local activo:
 
-👉 **[Prueba la Demo Interactiva en Vivo aquí](https://enybyy.github.io/dni-identity-validator/)**
+```powershell
+npm install --no-save --package-lock=false playwright
+npx playwright install chromium
+node tests/browser.cjs
+```
 
----
+Si Playwright está instalado fuera del proyecto, configura `PLAYWRIGHT_MODULE` con su ruta. El test genera las capturas reales de escritorio, listas y móvil. Para regenerar el libro de prueba, ejecuta `python tests/make_fixture.py`.
 
-## 📈 Impacto y Mejoras Conseguidas
+Se verificaron cinco pruebas del núcleo y el recorrido de navegador completo. Consulta [la evidencia y los límites](docs/verification.md).
 
-| Desafío Previo | Solución con DNI Identity Validator | Beneficio para el Negocio |
-|---|---|---|
-| **Seguridad de Tokens** | Credenciales expuestas en frontend | Tokens aislados en entorno Serverless seguro | **Protección total de API keys y prevención de robo de cuota** |
-| **Tiempo de Validación Manual** | 2 a 3 minutos por persona (búsqueda manual) | < 500 ms de respuesta por consulta | **Agilización del onboarding de clientes en un 85%** |
-| **Cotejo de Bases de Datos Masivas** | Días de trabajo administrativo | Procesamiento batch automatizado de miles de filas de Excel | **Ahorro de decenas de horas hombre en auditorías y nóminas** |
-| **Infraestructura y Costos** | Necesidad de servidor backend dedicado 24/7 | Arquitectura Serverless Edge sin servidores inactivos | **Cero costos fijos de infraestructura** |
+## Estructura
 
----
+```text
+index.html                 aplicación y controles accesibles
+assets/core.js             formato, datos ficticios, CSV y comparación
+assets/xlsx.js             importador XLSX local y limitado
+assets/app.js              interacción, mapeo y exportaciones
+assets/style.css           diseño adaptable
+assets/screenshots/        capturas reales para README y portafolio
+examples/                  listas de demostración CSV y XLSX
+tests/                     pruebas reproducibles
+docs/                      diseño y evidencia
+```
 
-## 🛠️ Stack Tecnológico
+El importador XLSX lee cadenas compartidas, cadenas inline y valores guardados; no ejecuta macros, evalúa fórmulas ni utiliza estilos para transformar números. Admite hasta 5 MB de archivo, 20 MB de contenido interno, 2.000 registros y 100 columnas. Los libros `.xls` deben convertirse a `.xlsx`; en navegadores sin descompresión compatible puedes importar CSV.
 
-- **Edge Computing & Serverless**: Cloudflare Pages Functions / Workers Runtime.
-- **Backend / Scripts de Auditoría**: Python 3, Pandas, Requests, OpenPyXL.
-- **Frontend**: HTML5, Tailwind CSS, Vanilla JavaScript (Fetch API).
+Los datos se procesan en memoria del navegador; no se guardan en `localStorage` ni se envían a una API. El texto importado se inserta como texto, y el exportador neutraliza prefijos que podrían interpretarse como fórmulas en una hoja de cálculo.
 
----
+## Capturas para portafolio
 
-## 📬 ¿Buscas integrar APIs y validar datos en tu negocio?
+| Archivo | Uso |
+| --- | --- |
+| [portfolio-1000x750.png](assets/screenshots/portfolio-1000x750.png) | Vista 4:3 de la ficha, para la galería del portafolio |
+| [desktop.png](assets/screenshots/desktop.png) | Aplicación completa de escritorio |
+| [batch.png](assets/screenshots/batch.png) | Revisión de lista y exportación |
+| [mobile.png](assets/screenshots/mobile.png) | Interfaz móvil, captura completa a 390 px |
 
-Diseño e implemento **arquitecturas serverless seguras, integraciones con APIs externas (KYC, facturación) y pipelines de procesamiento masivo de datos**.
-
-- **LinkedIn**: [Eliud RM](https://www.linkedin.com/in/eliud-rojas-mendoza-414652212/)
-- **GitHub**: [@Enybyy](https://github.com/Enybyy)
-- *Disponible para proyectos freelance y consultoría tecnológica.*
-
-
-</details>
+Descripción sugerida: «DNI Studio: demo web de revisión de registros, con importación CSV/Excel, comparación de nombres completos, detección de duplicados y exportación. Datos ficticios; no consulta registros oficiales.»
