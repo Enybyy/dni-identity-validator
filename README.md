@@ -14,50 +14,32 @@ Revisión de registros individuales y listas CSV o Excel, con comparación de no
 
 *La ficha utiliza datos ficticios; la aplicación no consulta registros oficiales ni acredita identidades.*
 
-[Acerca del proyecto](#acerca-del-proyecto) · [Capturas](#capturas) · [Uso e instalación](#uso-e-instalación)
+[Acerca del proyecto](#acerca-del-proyecto) · [Capturas](#capturas) · [Recorrido](#en-el-día-a-día) · [Tecnología](#cómo-está-construido) · [Uso local](#uso-local)
 
 </div>
 
 ## Acerca del proyecto
 
-DNI Studio reúne la entrada de datos, la comparación y la revisión de listas en una misma aplicación. Una ficha permite recorrer el flujo individual; la vista por lotes añade selección de hojas y columnas, avisos de formato y detección de duplicados.
+Antes de trabajar con una lista de personas, conviene ordenar los identificadores, localizar duplicados y revisar que los nombres estén completos. DNI Studio reúne esas comprobaciones en una ficha individual y una vista por lotes, con importación de CSV o Excel y selección de hojas y columnas.
 
-Los resultados mantienen visible su procedencia ficticia. El proyecto explora cómo organizar una revisión administrativa: conservar los identificadores como texto, distinguir las filas pendientes y exportar lo que se ha revisado.
+El resultado distingue las filas que necesitan atención y conserva los identificadores como texto. Así, la revisión puede continuar sobre una salida estructurada, con cada aviso asociado a su registro. La referencia de nombres es ficticia: el proyecto demuestra el recorrido de revisión sin consultar registros oficiales.
+
+## En el día a día
+
+| Dentro del proyecto | Detalle |
+| --- | --- |
+| Ficha individual | Entrada de ocho dígitos, referencia ficticia y comparación del nombre completo. |
+| Revisión por lotes | Importación CSV/XLSX, selección de hoja y columnas, y avisos por registro. |
+| Identificadores y duplicados | Conservación de ceros iniciales y señalización de DNIs repetidos. |
+| Salida de la revisión | Exportación CSV o JSON con la procedencia de los datos identificada. |
 
 ## Capturas
 
-<details>
-<summary><strong>Revisión de listas y exportación</strong></summary>
+### Revisión de listas y exportación
 
 ![Revisión de listas y exportación](assets/screenshots/batch.png)
 
-</details>
-
-<details>
-<summary><strong>Vista móvil</strong></summary>
-
-![Vista móvil](assets/screenshots/mobile.png)
-
-</details>
-
-## Uso e instalación
-
-<details>
-<summary><strong>Ver el recorrido, las instrucciones y las notas técnicas</strong></summary>
-
-## Ejecución local
-
-Requiere Python 3 para servir los archivos. La aplicación no tiene dependencias de red, cuentas ni claves API.
-
-```powershell
-git clone https://github.com/Enybyy/dni-identity-validator.git
-cd dni-identity-validator
-python -m http.server 5082 --bind 127.0.0.1
-```
-
-Abre `http://127.0.0.1:5082`. Para publicar la misma aplicación, configura GitHub Pages sobre la raíz de la rama principal.
-
-## Uso
+## Explorar la demo
 
 - **Una ficha:** escribe exactamente ocho dígitos. Cada entrada genera siempre el mismo nombre ficticio; conserva ceros iniciales. Puedes comparar el nombre completo, copiar los datos o descargar JSON.
 - **Una lista:** pega un DNI por línea o una tabla CSV con encabezados, importa `.csv` o `.xlsx`, selecciona la hoja y las columnas DNI y nombre completo, y pulsa **Revisar lista**.
@@ -74,7 +56,34 @@ Un flujo funcional de entrada, validación, revisión por lotes y exportación. 
 
 El proyecto reemplaza las páginas anteriores y el proxy ligado a un proveedor específico por una aplicación estática independiente. La integración con un servicio real no forma parte de esta versión. Las claves de cualquier futura integración deben permanecer en un servidor propio.
 
-## Pruebas
+## Cómo está construido
+
+| Área | Tecnología |
+| --- | --- |
+| Interfaz y reglas | HTML, CSS y JavaScript |
+| Archivos | Lector CSV e importador XLSX local |
+| Datos | Procesamiento en memoria del navegador, con referencias ficticias |
+| Demo y verificación | GitHub Pages, Node.js y Playwright |
+
+## Uso local
+
+<details>
+<summary><strong>Ejecutar en tu equipo</strong></summary>
+
+Requiere Python 3 para servir los archivos. La aplicación no tiene dependencias de red, cuentas ni claves API.
+
+```powershell
+git clone https://github.com/Enybyy/dni-identity-validator.git
+cd dni-identity-validator
+python -m http.server 5082 --bind 127.0.0.1
+```
+
+Abre `http://127.0.0.1:5082`. Para publicar la misma aplicación, configura GitHub Pages sobre la raíz de la rama principal.
+
+</details>
+
+<details>
+<summary><strong>Pruebas</strong></summary>
 
 Las pruebas del núcleo requieren Node.js 18 o posterior y no requieren instalar paquetes.
 
@@ -94,7 +103,10 @@ Si Playwright está instalado fuera del proyecto, configura `PLAYWRIGHT_MODULE` 
 
 Se verificaron cinco pruebas del núcleo y el recorrido de navegador completo. Consulta [la evidencia y los límites](docs/verification.md).
 
-## Estructura
+</details>
+
+<details>
+<summary><strong>Estructura</strong></summary>
 
 ```text
 index.html                 aplicación y controles accesibles
@@ -112,14 +124,16 @@ El importador XLSX lee cadenas compartidas, cadenas inline y valores guardados; 
 
 Los datos se procesan en memoria del navegador; no se guardan en `localStorage` ni se envían a una API. El texto importado se inserta como texto, y el exportador neutraliza prefijos que podrían interpretarse como fórmulas en una hoja de cálculo.
 
-## Capturas para portafolio
+</details>
+
+<details>
+<summary><strong>Capturas para portafolio</strong></summary>
 
 | Archivo | Uso |
 | --- | --- |
 | [portfolio-1000x750.png](assets/screenshots/portfolio-1000x750.png) | Vista 4:3 de la ficha, para la galería del portafolio |
 | [desktop.png](assets/screenshots/desktop.png) | Aplicación completa de escritorio |
 | [batch.png](assets/screenshots/batch.png) | Revisión de lista y exportación |
-| [mobile.png](assets/screenshots/mobile.png) | Interfaz móvil, captura completa a 390 px |
 
 Descripción sugerida: «DNI Studio: demo web de revisión de registros, con importación CSV/Excel, comparación de nombres completos, detección de duplicados y exportación. Datos ficticios; no consulta registros oficiales.»
 
