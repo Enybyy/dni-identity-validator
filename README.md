@@ -1,10 +1,49 @@
+<div align="center">
+
 # DNI Studio
 
-Aplicación web para revisar el formato de DNIs, comparar nombres completos e importar listas CSV o Excel con datos ficticios de demostración.
+Revisión de registros individuales y listas CSV o Excel, con comparación de nombres completos y exportación de resultados.
 
-![Consulta de una ficha ficticia en DNI Studio](assets/screenshots/portfolio-1000x750.png)
+<a href="https://enybyy.github.io/dni-identity-validator/"><img src="docs/media/demo.svg" width="360" alt="Abrir demo"></a>
 
-[Abrir demo](https://enybyy.github.io/dni-identity-validator/) · [Ver capturas](assets/screenshots/) · [Evidencia de pruebas](docs/verification.md)
+<p><a href="https://github.com/Enybyy"><img src="docs/media/github.svg" width="112" alt="GitHub de Eliud Rojas Mendoza"></a>
+<a href="https://www.linkedin.com/in/eliud-rojas-mendoza-414652212/"><img src="docs/media/linkedin.svg" width="112" alt="LinkedIn de Eliud Rojas Mendoza"></a>
+<a href="https://www.upwork.com/freelancers/~01471ca462b236e8e5"><img src="docs/media/upwork.svg" width="112" alt="Upwork de Eliud Rojas Mendoza"></a></p>
+
+[![DNI Studio en uso](assets/screenshots/portfolio-1000x750.png)](https://enybyy.github.io/dni-identity-validator/)
+
+*La ficha utiliza datos ficticios; la aplicación no consulta registros oficiales ni acredita identidades.*
+
+[Acerca del proyecto](#acerca-del-proyecto) · [Capturas](#capturas) · [Uso e instalación](#uso-e-instalación)
+
+</div>
+
+## Acerca del proyecto
+
+DNI Studio reúne la entrada de datos, la comparación y la revisión de listas en una misma aplicación. Una ficha permite recorrer el flujo individual; la vista por lotes añade selección de hojas y columnas, avisos de formato y detección de duplicados.
+
+Los resultados mantienen visible su procedencia ficticia. El proyecto explora cómo organizar una revisión administrativa: conservar los identificadores como texto, distinguir las filas pendientes y exportar lo que se ha revisado.
+
+## Capturas
+
+<details>
+<summary><strong>Revisión de listas y exportación</strong></summary>
+
+![Revisión de listas y exportación](assets/screenshots/batch.png)
+
+</details>
+
+<details>
+<summary><strong>Vista móvil</strong></summary>
+
+![Vista móvil](assets/screenshots/mobile.png)
+
+</details>
+
+## Uso e instalación
+
+<details>
+<summary><strong>Ver el recorrido, las instrucciones y las notas técnicas</strong></summary>
 
 ## Ejecución local
 
@@ -29,7 +68,7 @@ La primera fila de cada archivo debe contener los encabezados. El nombre a compa
 
 Al usar Excel, guarda la columna DNI como texto. Si el libro ya perdió los ceros iniciales, la aplicación informa formato inválido en lugar de inventar los dígitos faltantes. Al volver a abrir un CSV en Excel, importa también esa columna como texto.
 
-## Qué demuestra
+## Sobre los datos de ejemplo
 
 Un flujo funcional de entrada, validación, revisión por lotes y exportación. **No consulta registros oficiales, no verifica que un DNI exista y no acredita identidades.** Todos los nombres y ubicaciones son ficticios; una coincidencia con la demo compara texto, no constituye una verificación real. El diseño de la ficha no representa un carné oficial.
 
@@ -83,3 +122,17 @@ Los datos se procesan en memoria del navegador; no se guardan en `localStorage` 
 | [mobile.png](assets/screenshots/mobile.png) | Interfaz móvil, captura completa a 390 px |
 
 Descripción sugerida: «DNI Studio: demo web de revisión de registros, con importación CSV/Excel, comparación de nombres completos, detección de duplicados y exportación. Datos ficticios; no consulta registros oficiales.»
+
+</details>
+
+---
+
+<div align="center">
+
+**Eliud Rojas Mendoza · Enybyy**
+
+<p><a href="https://github.com/Enybyy"><img src="docs/media/github.svg" width="112" alt="GitHub de Eliud Rojas Mendoza"></a>
+<a href="https://www.linkedin.com/in/eliud-rojas-mendoza-414652212/"><img src="docs/media/linkedin.svg" width="112" alt="LinkedIn de Eliud Rojas Mendoza"></a>
+<a href="https://www.upwork.com/freelancers/~01471ca462b236e8e5"><img src="docs/media/upwork.svg" width="112" alt="Upwork de Eliud Rojas Mendoza"></a></p>
+
+</div>
